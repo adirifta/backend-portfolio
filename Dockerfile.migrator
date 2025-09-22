@@ -1,0 +1,17 @@
+FROM postgres:13-alpine
+
+# Install additional tools
+RUN apk add --no-cache postgresql-client curl
+
+# Copy migration scripts
+COPY scripts/ /docker-entrypoint-initdb.d/
+
+# Set working directory
+WORKDIR /app
+
+# Copy migration runner script
+COPY scripts/migrate-supabase.sh /app/migrate-supabase.sh
+RUN chmod +x /app/migrate-supabase.sh
+
+# Entry point untuk migration
+CMD ["/app/migrate-supabase.sh"]

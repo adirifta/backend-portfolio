@@ -1,43 +1,116 @@
-name: Deploy to cPanel
+name: Deploy Go App to cPanel
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
-  deploy:
+  test:
+    name: Test Application
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Go
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.21'
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
 
-    - name: Build Go application
-      run: |
-        go mod download
-        go build -o main ./cmd/api
+      - name: Install dependencies
+        run: go mod download
 
-    - name: Install SSH key
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Run tests
+        run: go test ./...
 
-    - name: Deploy to cPanel via SSH
-      run: |
-        # Copy files to server
-        scp -o StrictHostKeyChecking=no \
-            main \
-            .env \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/app/
-        
-        # Restart application
-        ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "cd ~/app && ./restart.sh"
+      - name: Build application
+        run: go build -o portfolio-app ./cmd/api
+
+  deploy:
+    name: Deploy to cPanel
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build Go application
+        run: |
+          go mod download
+          go build -ldflags="-s -w" -o portfolio-app ./cmd/api
+          ls -la portfolio-app
+
+      - name: Create production environment file
+        run: |
+          cat > .env.production << EOF
+          DB_HOST=${{ secrets.DB_HOST || 'localhost' }}
+          DB_PORT=${{ secrets.DB_PORT || '5432' }}
+          DB_USER=${{ secrets.DB_USER || 'portfolio_user' }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD || 'portfolio_password' }}
+          DB_NAME=${{ secrets.DB_NAME || 'portfolio_db' }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          PORT=8080
+          GIN_MODE=release
+          EOF
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.CPANEL_SSH_PRIVATE_KEY }}
+
+      - name: Deploy to cPanel via SCP
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            portfolio-app \
+            .env.production \
+            ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }}:/home/${{ secrets.CPANEL_USERNAME }}/portfolio-app/
+
+      - name: Execute deployment script on cPanel
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }} '
+            cd /home/${{ secrets.CPANEL_USERNAME }}/portfolio-app
+            chmod +x portfolio-app
+            chmod 600 .env.production
+            
+            # Stop existing application
+            pkill -f portfolio-app || true
+            sleep 2
+            
+            # Start new application
+            source .env.production
+            nohup ./portfolio-app > app.log 2>&1 &
+            
+            # Wait for startup
+            sleep 5
+            
+            # Verify application is running
+            if curl -f http://localhost:8080/health; then
+              echo "✅ Deployment successful!"
+            else
+              echo "❌ Deployment failed!"
+              cat app.log
+              exit 1
+            fi
+          '
+
+      - name: Setup Reverse Proxy
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_HOST }} '
+            # Create .htaccess for reverse proxy
+            cat > /home/${{ secrets.CPANEL_USERNAME }}/public_html/portfolio/.htaccess << EOF
+            RewriteEngine On
+            RewriteRule ^(.*)$ http://localhost:8080/$1 [P,L]
+            EOF
+            
+            # Set proper permissions
+            chmod 644 /home/${{ secrets.CPANEL_USERNAME }}/public_html/portfolio/.htaccess
+          '

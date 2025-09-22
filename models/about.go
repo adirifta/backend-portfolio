@@ -8,8 +8,8 @@ type About struct {
 	ID          uint      `json:"id" gorm:"primaryKey"`
 	Name        string    `json:"name"`
 	Title       string    `json:"title"`
-	Description1 string    `json:"description_singkat"`
-	Description2 string    `json:"description_panjang"`
+	DescriptionSingkat string    `json:"description_singkat"`
+	DescriptionPanjang string    `json:"description_panjang"`
 	Email       string    `json:"email"`
 	Phone       string    `json:"phone"`
 	Address     string    `json:"address"`

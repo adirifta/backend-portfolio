@@ -8,18 +8,27 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env.local  # Load dari file environment
+      - .env.local
     environment:
       - GIN_MODE=debug
     networks:
       - portfolio-network
-    volumes:
-      - .:/app
-      - go-modules:/go/pkg/mod
+    # DNS configuration untuk koneksi yang lebih baik
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   portfolio-network:
     driver: bridge
 
+# Volume untuk Go modules cache (optional)
 volumes:
   go-modules:

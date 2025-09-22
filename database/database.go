@@ -1,11 +1,10 @@
 package database
 
 import (
-	"fmt"
-	"log"
 	"backend-portfolio/config"
 	"backend-portfolio/models"
-	"backend-portfolio/utils"
+	"fmt"
+	"log"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -14,12 +13,18 @@ import (
 var DB *gorm.DB
 
 func InitDB(cfg *config.Config) {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
+	// Gunakan sslmode=require untuk Supabase
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	log.Printf("Connecting to Supabase: %s", cfg.DBHost)
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: dsn,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Fatal("Failed to connect to Supabase:", err)
 	}
 
 	// Auto migrate models
@@ -35,10 +40,7 @@ func InitDB(cfg *config.Config) {
 	}
 
 	DB = db
-	log.Println("Database connected successfully")
-	
-	// Initialize JWT with secret from config
-	utils.InitJWT(cfg)
+	log.Println("✅ Connected to Supabase successfully")
 }
 
 func GetDB() *gorm.DB {

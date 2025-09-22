@@ -1,10 +1,10 @@
 -- Database initialization script for Portfolio Backend
 
--- Create database
-CREATE DATABASE portfolio_db;
+-- -- Create database
+-- CREATE DATABASE portfolio_db;
 
--- Connect to the database
-\c portfolio_db;
+-- -- Connect to the database
+-- \c portfolio_db;
 
 -- Create users table
 CREATE TABLE users (
