@@ -1,0 +1,5 @@
+-- Hapus kolom yang tidak terpakai dari tabel abouts
+-- ALTER TABLE abouts 
+-- DROP COLUMN IF EXISTS old_column_1,
+-- DROP COLUMN IF EXISTS old_column_2,
+-- DROP COLUMN IF EXISTS old_column_3;

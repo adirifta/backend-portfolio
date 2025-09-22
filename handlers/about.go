@@ -35,7 +35,7 @@ func CreateOrUpdateAbout(c *gin.Context) {
 		}
 		c.JSON(http.StatusCreated, about)
 	} else {
-		// Update existing about entry
+		// Update existing about entry dengan semua field termasuk yang baru
 		about.ID = existingAbout.ID
 		if err := database.GetDB().Save(&about).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update about"})

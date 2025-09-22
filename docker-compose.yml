@@ -11,6 +11,7 @@ services:
       - DB_USER=portfolio_user
       - DB_PASSWORD=portfolio_password
       - DB_NAME=portfolio_db
+      - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
     depends_on:
       - db
     restart: unless-stopped
@@ -27,7 +28,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/migrations:/docker-entrypoint-initdb.d/migrations
     restart: unless-stopped
     networks:
       - portfolio-network

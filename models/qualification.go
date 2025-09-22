@@ -18,7 +18,7 @@ type Qualification struct {
 	Title         string             `json:"title"`
 	Description   string             `json:"description"`
 	StartDate     time.Time          `json:"start_date"`
-	EndDate       *time.Time         `json:"end_date,omitempty"` // Pointer to allow null
+	EndDate       *time.Time         `json:"end_date,omitempty"`
 	Current       bool               `json:"current"`
 	CreatedAt     time.Time          `json:"created_at"`
 	UpdatedAt     time.Time          `json:"updated_at"`

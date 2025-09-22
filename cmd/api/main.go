@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"backend-portfolio/config"
 	"backend-portfolio/database"
 	"backend-portfolio/handlers"
@@ -22,9 +23,9 @@ func main() {
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // Your React app address
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8080"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
@@ -32,9 +33,7 @@ func main() {
 	// Public routes
 	r.POST("/api/login", handlers.Login)
 	r.POST("/api/reset-admin", handlers.ResetAdminPassword)
-	r.POST("/api/create-user", handlers.CreateUser)
-
-	// Public routes
+	r.POST("/api/create-user", handlers.CreateUser)         
 	r.GET("/api/about", handlers.GetAbout)
 	r.GET("/api/portfolio", handlers.GetAllPortfolio)
 	r.GET("/api/portfolio/:id", handlers.GetPortfolio)
@@ -48,6 +47,7 @@ func main() {
 	auth.Use(middleware.AuthMiddleware())
 	{
 		auth.POST("/about", handlers.CreateOrUpdateAbout)
+		auth.PUT("/about/:id", handlers.UpdateAbout)
 		auth.POST("/portfolio", handlers.CreatePortfolio)
 		auth.PUT("/portfolio/:id", handlers.UpdatePortfolio)
 		auth.DELETE("/portfolio/:id", handlers.DeletePortfolio)
@@ -59,6 +59,17 @@ func main() {
 		auth.DELETE("/qualifications/:id", handlers.DeleteQualification)
 	}
 
+	// Health check endpoint
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status": "OK",
+			"message": "Server is running",
+		})
+	})
+
 	// Start server
-	r.Run(":" + cfg.Port)
+	log.Printf("Server starting on port %s", cfg.Port)
+	if err := r.Run(":" + cfg.Port); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
