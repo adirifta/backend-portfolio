@@ -1,7 +1,7 @@
 steps:
   # Step 1: Checkout source code
   - name: 'gcr.io/cloud-builders/git'
-    args: ['clone', 'https://github.com/adirifta/backend-portfolio', '.']
+    args: ['clone', 'https://github.com/adirifta/backend-portfolio', 'app']
   
   # Step 2: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
