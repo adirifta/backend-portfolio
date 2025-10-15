@@ -9,7 +9,7 @@ steps:
       [
         'build',
         '-t',
-        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest',
+        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio/backendPortfolio:latest',
         '.'
       ]
 
@@ -18,12 +18,12 @@ steps:
     args:
       [
         'push',
-        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest'
+        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio/backendPortfolio:latest'
       ]
 
 images:
   # Define the container image to be pushed to Artifact Registry
-   - 'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest'
+   - 'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio/backendPortfolio:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
