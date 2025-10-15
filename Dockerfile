@@ -1,27 +1,27 @@
-# FROM golang:1.21-alpine AS builder
+FROM golang:1.21-alpine AS builder
 
-# WORKDIR /app
+WORKDIR /app
 
-# COPY go.mod go.sum ./
-# RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download
 
-# COPY . .
+COPY . .
 
-# RUN go build -o main ./cmd/api
+RUN go build -o main ./cmd/api
 
-# FROM alpine:latest
+FROM alpine:latest
 
-# RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates
 
-# WORKDIR /app
+WORKDIR /app
 
-# COPY --from=builder /app/main .
-# COPY --from=builder /app/.env .
-# COPY scripts/init.sql ./scripts/
+COPY --from=builder /app/main .
+COPY --from=builder /app/.env .
+COPY scripts/init.sql ./scripts/
 
-# EXPOSE 8080
+EXPOSE 8080
 
-# CMD ["./main"]
+CMD ["./main"]
 
 
 # FROM golang:1.21-alpine AS builder
@@ -63,13 +63,13 @@
 
 
 
-FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN go mod download
-RUN go build -o /bin/app
+# FROM golang:1.21-alpine AS builder
+# WORKDIR /app
+# COPY . .
+# RUN go mod download
+# RUN go build -o /bin/app
 
 
-FROM alpine
-COPY --from=build /bin/app /bin/app
-ENTRYPOINT [ "/bin/app" ]
+# FROM alpine
+# COPY --from=builder /bin/app /bin/app
+# ENTRYPOINT [ "/bin/app" ]

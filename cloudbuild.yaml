@@ -10,7 +10,7 @@ steps:
         'build',
         '-t',
         'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest',
-        'src'
+        '.'
       ]
 
   # Step 3: Push Docker image
