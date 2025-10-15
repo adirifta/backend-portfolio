@@ -29,7 +29,7 @@ func main() {
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://backend-portofolio.adirdk.com", "http://localhost:8080"},
+		AllowOrigins:     []string{"https://backend-portofolio.adirdk.com", "http://localhost:3000", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -76,9 +76,9 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = cfg.Port
+		port = cfg.Port // fallback ke port dari config lokal
 		if port == "" {
-			port = "8080"
+			port = "8080" // default jika tidak ada keduanya
 		}
 	}
 
