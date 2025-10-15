@@ -1,19 +1,29 @@
 steps:
-  # Step 1: Checkout the source code from GitHub
+  # Step 1: Checkout source code
   - name: 'gcr.io/cloud-builders/git'
     args: ['clone', 'https://github.com/adirifta/backend-portfolio', 'src']
   
-  # Step 2: Build the container image using Docker
+  # Step 2: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/backendPortfolio:latest', 'src']
+    args:
+      [
+        'build',
+        '-t',
+        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest',
+        'src'
+      ]
 
-  # Step 3: Push the container image to Google Artifact Registry
+  # Step 3: Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/backendPortfolio:latest']
+    args:
+      [
+        'push',
+        'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest'
+      ]
 
 images:
   # Define the container image to be pushed to Artifact Registry
-   - 'gcr.io/$PROJECT_ID/backendPortfolio:latest'
+   - 'asia-southeast1-docker.pkg.dev/project-adi-474909/backendportofolio:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
