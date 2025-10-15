@@ -14,3 +14,6 @@ steps:
 images:
   # Define the container image to be pushed to Artifact Registry
   - 'gcr.io/$PROJECT_ID/backendPortfolio'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
