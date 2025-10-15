@@ -39,7 +39,7 @@ func main() {
 	// Public routes
 	r.POST("/api/login", handlers.Login)
 	r.POST("/api/reset-admin", handlers.ResetAdminPassword)
-	r.POST("/api/create-user", handlers.CreateUser)         
+	r.POST("/api/create-user", handlers.CreateUser)
 	r.GET("/api/about", handlers.GetAbout)
 	r.GET("/api/portfolio", handlers.GetAllPortfolio)
 	r.GET("/api/portfolio/:id", handlers.GetPortfolio)
@@ -68,14 +68,22 @@ func main() {
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"status": "OK",
+			"status":  "OK",
 			"message": "Server is running",
 		})
 	})
 
 	// Start server
-	log.Printf("Server starting on port %s", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = cfg.Port
+		if port == "" {
+			port = "8080"
+		}
+	}
+
+	log.Printf("Server starting on port %s", port)
+	if err := r.Run(":" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }
