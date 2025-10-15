@@ -9,7 +9,7 @@ steps:
       [
         'build',
         '-t',
-        'asia-southeast1-docker.pkg.dev/$PROJECT_ID/backendportofolio/backend-portfolio-:latest',
+        'asia-southeast1-docker.pkg.dev/$PROJECT_ID/backendportofolio/backend-portfolio:latest',
         '.'
       ]
 
