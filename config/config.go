@@ -40,15 +40,38 @@ func getEnv(key, defaultValue string) string {
 }
 
 // NewDatabaseConnection untuk Supabase dengan SSL (CARA YANG BENAR)
+// func NewDatabaseConnection(cfg *Config) (*gorm.DB, error) {
+// 	// Gunakan sslmode=require atau verify-full untuk Supabase
+// 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
+// 		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
+	
+// 	log.Printf("Connecting to database: %s@%s:%s", cfg.DBUser, cfg.DBHost, cfg.DBPort)
+	
+// 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
+// }
+
 func NewDatabaseConnection(cfg *Config) (*gorm.DB, error) {
-	// Gunakan sslmode=require atau verify-full untuk Supabase
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
-		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort)
-	
-	log.Printf("Connecting to database: %s@%s:%s", cfg.DBUser, cfg.DBHost, cfg.DBPort)
-	
+	var dsn string
+
+	// Jika dijalankan di Cloud Run, gunakan koneksi via Cloud SQL Proxy
+	if os.Getenv("K_SERVICE") != "" {
+		// Gunakan koneksi via Cloud SQL Unix socket
+		dsn = fmt.Sprintf(
+			"user=%s password=%s dbname=%s host=/cloudsql/project-adi-474909:us-central1:portfolio-db sslmode=disable",
+			cfg.DBUser, cfg.DBPassword, cfg.DBName,
+		)
+	} else {
+		// Jalankan secara lokal
+		dsn = fmt.Sprintf(
+			"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
+			cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort,
+		)
+	}
+
+	log.Printf("Connecting to database with DSN: %s", dsn)
 	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
+
 
 // Atau jika ingin lebih simple, gunakan ini saja:
 func InitDatabase(cfg *Config) (*gorm.DB, error) {
