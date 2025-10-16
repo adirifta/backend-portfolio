@@ -7,6 +7,7 @@ import (
 	"backend-portfolio/middleware"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -34,10 +35,30 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://adirdk.com", "http://localhost:3000", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
-		ExposeHeaders:    []string{"Content-Length"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}))
+
+	// Handle preflight requests secara manual
+	r.OPTIONS("/*path", func(c *gin.Context) {
+		origin := c.Request.Header.Get("Origin")
+		allowedOrigins := []string{"https://adirdk.com", "http://localhost:3000", "http://localhost:8080"}
+		
+		for _, allowedOrigin := range allowedOrigins {
+			if origin == allowedOrigin {
+				c.Header("Access-Control-Allow-Origin", origin)
+				c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+				c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, Accept, X-Requested-With")
+				c.Header("Access-Control-Allow-Credentials", "true")
+				c.Header("Access-Control-Max-Age", "43200") // 12 hours
+				c.Status(204)
+				return
+			}
+		}
+		c.Status(403)
+	})
 
 	// Public routes
 	r.POST("/api/login", handlers.Login)
