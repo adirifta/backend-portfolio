@@ -32,7 +32,7 @@ func main() {
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://backend-portofolio.adirdk.com", "http://localhost:3000", "http://localhost:8080"},
+		AllowOrigins:     []string{"https://adirdk.com", "http://localhost:3000", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},

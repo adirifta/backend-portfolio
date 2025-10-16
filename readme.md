@@ -57,3 +57,9 @@ ALTER TABLE nama_tabel
 DROP COLUMN kolom1,
 DROP COLUMN kolom2;
 `
+
+## Deploy Backend Ke Google Cloud Console
+- Cloud Build 
+- Artifacts Registry
+- Cloud SQL (Postgresql)
+- Cloud Run
