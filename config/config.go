@@ -53,25 +53,30 @@ func getEnv(key, defaultValue string) string {
 func NewDatabaseConnection(cfg *Config) (*gorm.DB, error) {
 	var dsn string
 
-	// Jika dijalankan di Cloud Run, gunakan koneksi via Cloud SQL Proxy
 	if os.Getenv("K_SERVICE") != "" {
-		// Gunakan koneksi via Cloud SQL Unix socket
+		// Jalankan di Cloud Run (Gunakan Unix Socket)
 		dsn = fmt.Sprintf(
 			"user=%s password=%s dbname=%s host=/cloudsql/project-adi-474909:us-central1:portfolio-db sslmode=disable",
 			cfg.DBUser, cfg.DBPassword, cfg.DBName,
 		)
+		log.Println("Connecting to Cloud SQL via Unix socket...")
 	} else {
 		// Jalankan secara lokal
 		dsn = fmt.Sprintf(
 			"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
 			cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort,
 		)
+		log.Println("Connecting to Supabase (local dev)...")
 	}
 
-	log.Printf("Connecting to database with DSN: %s", dsn)
-	return gorm.Open(postgres.Open(dsn), &gorm.Config{})
-}
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to DB: %w", err)
+	}
 
+	log.Println("✅ Database connection established successfully")
+	return db, nil
+}
 
 // Atau jika ingin lebih simple, gunakan ini saja:
 func InitDatabase(cfg *Config) (*gorm.DB, error) {
