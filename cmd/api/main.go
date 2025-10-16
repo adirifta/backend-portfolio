@@ -19,12 +19,15 @@ func main() {
 	}
 
 	// Load configuration
+	log.Println("🔧 Loading configuration...")
 	cfg := config.LoadConfig()
 
-	// Initialize database
+	// Initialize database dengan error handling yang better
+	log.Println("🗄️ Initializing database...")
 	database.InitDB(cfg)
 
 	// Setup router
+	log.Println("🚀 Setting up router...")
 	r := gin.Default()
 
 	// CORS configuration
@@ -65,11 +68,38 @@ func main() {
 		auth.DELETE("/qualifications/:id", handlers.DeleteQualification)
 	}
 
-	// Health check endpoint
+	// Health check endpoint dengan database check
 	r.GET("/health", func(c *gin.Context) {
+		db := database.GetDB()
+		sqlDB, err := db.DB()
+		
+		if err != nil {
+			c.JSON(500, gin.H{
+				"status":  "ERROR",
+				"message": "Database connection failed",
+			})
+			return
+		}
+
+		if err := sqlDB.Ping(); err != nil {
+			c.JSON(500, gin.H{
+				"status":  "ERROR",
+				"message": "Database ping failed",
+			})
+			return
+		}
+
 		c.JSON(200, gin.H{
 			"status":  "OK",
 			"message": "Server is running",
+		})
+	})
+
+	// Root endpoint
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Backend Portfolio API is running!",
+			"version": "1.0.0",
 		})
 	})
 
@@ -80,13 +110,15 @@ func main() {
 	}
 
 	if os.Getenv("K_SERVICE") != "" {
-		log.Println("Running on Cloud Run environment 🚀")
+		log.Println("🌐 Running on Cloud Run environment 🚀")
 	} else {
-		log.Println("Running locally 💻")
+		log.Println("💻 Running locally")
 	}
 
-	log.Printf("Server starting on port %s", port)
+	log.Printf("🎯 Server starting on port %s", port)
+	log.Printf("📍 Health check available at: http://localhost:%s/health", port)
+	
 	if err := r.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server:", err) // Fatal akan otomatis exit(1)
+		log.Fatalf("❌ Failed to start server: %v", err)
 	}
 }

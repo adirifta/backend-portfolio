@@ -53,6 +53,7 @@ import (
 	"backend-portfolio/config"
 	"backend-portfolio/models"
 	"log"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -60,11 +61,48 @@ import (
 var DB *gorm.DB
 
 func InitDB(cfg *config.Config) {
-	db, err := config.NewDatabaseConnection(cfg)
+	var db *gorm.DB
+	var err error
+	
+	// Coba konek dengan retry mechanism
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		db, err = config.NewDatabaseConnection(cfg)
+		if err == nil {
+			break
+		}
+		
+		log.Printf("⚠️ Attempt %d/%d: Failed to connect to database: %v", i+1, maxRetries, err)
+		
+		if i < maxRetries-1 {
+			waitTime := time.Duration(i+1) * 2 * time.Second
+			log.Printf("⏳ Retrying in %v...", waitTime)
+			time.Sleep(waitTime)
+		}
+	}
+	
 	if err != nil {
-		log.Fatalf("Failed to connect database: %v", err)
+		log.Fatalf("❌ Failed to connect to database after %d attempts: %v", maxRetries, err)
 	}
 
+	// Test connection
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("❌ Failed to get database instance: %v", err)
+	}
+
+	if err := sqlDB.Ping(); err != nil {
+		log.Fatalf("❌ Database ping failed: %v", err)
+	}
+
+	// Set connection pool settings
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
+	log.Println("✅ Database connection tested successfully")
+
+	// Auto migrate
 	err = db.AutoMigrate(
 		&models.User{},
 		&models.About{},
@@ -73,7 +111,7 @@ func InitDB(cfg *config.Config) {
 		&models.Qualification{},
 	)
 	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		log.Fatalf("❌ Failed to migrate database: %v", err)
 	}
 
 	DB = db

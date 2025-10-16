@@ -26,7 +26,7 @@ func LoadConfig() *Config {
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
 		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", "portfolio_db"),
+		DBName:     getEnv("DB_NAME", "portfolio-db"),
 		DBInstanceName: getEnv("DB_INSTANCE_NAME", ""),
 		JWTSecret:  getEnv("JWT_SECRET", "your-secret-key"),
 		Port:       getEnv("PORT", "8080"),
@@ -55,30 +55,47 @@ func NewDatabaseConnection(cfg *Config) (*gorm.DB, error) {
 	var dsn string
 
 	// Deteksi lingkungan Cloud Run
-	if os.Getenv("K_SERVICE") != "" && cfg.DBInstanceName != "" {
-		// Jalankan di Cloud Run (Gunakan Unix Socket)
-		log.Println("Connecting to Cloud SQL via Unix socket...")
-		dsn = fmt.Sprintf(
-			"user=%s password=%s dbname=%s host=/cloudsql/%s sslmode=disable",
-			cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBInstanceName, // <-- Gunakan variabel
-		)
+	if os.Getenv("K_SERVICE") != "" {
+		log.Println("🚀 Running in Cloud Run environment")
+		
+		if cfg.DBInstanceName != "" {
+			// Gunakan Unix socket untuk Cloud SQL
+			log.Printf("🔗 Connecting to Cloud SQL: %s", cfg.DBInstanceName)
+			dsn = fmt.Sprintf(
+				"user=%s password=%s database=%s host=/cloudsql/%s",
+				cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBInstanceName,
+			)
+		} else {
+			// Fallback ke koneksi TCP biasa
+			log.Printf("🔗 Connecting via TCP: %s:%s", cfg.DBHost, cfg.DBPort)
+			dsn = fmt.Sprintf(
+				"host=%s user=%s password=%s dbname=%s port=%s sslmode=require",
+				cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort,
+			)
+		}
 	} else {
-		// Jalankan secara lokal (misalnya ke Supabase atau DB lokal)
-		log.Println("Connecting to remote/local database (e.g., Supabase)...")
+		// Local development
+		log.Println("💻 Running in local environment")
 		dsn = fmt.Sprintf(
-			"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
+			"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 			cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort,
 		)
 	}
 
+	log.Printf("📝 DSN: %s", maskPassword(dsn))
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		// Beri pesan error yang lebih spesifik
-		return nil, fmt.Errorf("failed to connect database using DSN: %w", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	log.Println("✅ Database connection established successfully")
 	return db, nil
+}
+
+func maskPassword(dsn string) string {
+	// Sederhana saja, jangan log password sebenarnya
+	return "host=*** user=*** password=*** dbname=***"
 }
 
 // Atau jika ingin lebih simple, gunakan ini saja:
