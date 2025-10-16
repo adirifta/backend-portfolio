@@ -76,21 +76,17 @@ func main() {
 	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		// Jika tidak ada PORT dari Cloud Run, ambil dari .env
-		port = cfg.Port
-		if port == "" {
-			port = "8080" // fallback terakhir
-		}
-	}
-
-	log.Printf("Server starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server:", err)
+		port = "8080"
 	}
 
 	if os.Getenv("K_SERVICE") != "" {
 		log.Println("Running on Cloud Run environment 🚀")
 	} else {
 		log.Println("Running locally 💻")
+	}
+
+	log.Printf("Server starting on port %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err) // Fatal akan otomatis exit(1)
 	}
 }
