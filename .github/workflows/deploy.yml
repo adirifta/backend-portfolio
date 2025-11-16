@@ -1,4 +1,4 @@
-name: Deploy to Alibaba Cloud
+name: Deploy project
 
 on:
   push:

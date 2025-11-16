@@ -5,8 +5,6 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile.prod
-    ports:
-      - "8080:8080"
     environment:
       - DB_HOST=db
       - DB_PORT=5432
@@ -15,14 +13,17 @@ services:
       - DB_NAME=portfolio_db
       - JWT_SECRET=${JWT_SECRET}
       - GIN_MODE=release
+      - DOMAIN=${DOMAIN}
     depends_on:
       - db
     restart: unless-stopped
     networks:
       - portfolio-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.portfolio.rule=Host(`api.yourdomain.com`)"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   db:
     image: postgres:13-alpine
