@@ -9,84 +9,84 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetAllSkills(c *gin.Context) {
-	var skills []models.Skill
-	if err := database.GetDB().Find(&skills).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch skills"})
+func GetAllQualifications(c *gin.Context) {
+	var qualifications []models.Qualification
+	if err := database.GetDB().Find(&qualifications).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch qualifications"})
 		return
 	}
 
-	c.JSON(http.StatusOK, skills)
+	c.JSON(http.StatusOK, qualifications)
 }
 
-func GetSkill(c *gin.Context) {
+func GetQualification(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	var skill models.Skill
-	if err := database.GetDB().First(&skill, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Skill not found"})
+	var qualification models.Qualification
+	if err := database.GetDB().First(&qualification, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Qualification not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, skill)
+	c.JSON(http.StatusOK, qualification)
 }
 
-func CreateSkill(c *gin.Context) {
-	var skill models.Skill
-	if err := c.ShouldBindJSON(&skill); err != nil {
+func CreateQualification(c *gin.Context) {
+	var qualification models.Qualification
+	if err := c.ShouldBindJSON(&qualification); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := database.GetDB().Create(&skill).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create skill"})
+	if err := database.GetDB().Create(&qualification).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create qualification"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, skill)
+	c.JSON(http.StatusCreated, qualification)
 }
 
-func UpdateSkill(c *gin.Context) {
+func UpdateQualification(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	var skill models.Skill
-	if err := database.GetDB().First(&skill, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Skill not found"})
+	var qualification models.Qualification
+	if err := database.GetDB().First(&qualification, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Qualification not found"})
 		return
 	}
 
-	if err := c.ShouldBindJSON(&skill); err != nil {
+	if err := c.ShouldBindJSON(&qualification); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := database.GetDB().Save(&skill).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update skill"})
+	if err := database.GetDB().Save(&qualification).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update qualification"})
 		return
 	}
 
-	c.JSON(http.StatusOK, skill)
+	c.JSON(http.StatusOK, qualification)
 }
 
-func DeleteSkill(c *gin.Context) {
+func DeleteQualification(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
-	if err := database.GetDB().Delete(&models.Skill{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete skill"})
+	if err := database.GetDB().Delete(&models.Qualification{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete qualification"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Skill deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Qualification deleted successfully"})
 }

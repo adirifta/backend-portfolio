@@ -105,13 +105,13 @@ VALUES
 );
 
 -- Insert sample skills
-INSERT INTO skills (name, level, category, icon)
+INSERT INTO skills (name, level, score, category, icon)
 VALUES 
-('JavaScript', 90, 'Programming', 'fa-js'),
-('React', 85, 'Frontend', 'fa-react'),
-('Node.js', 80, 'Backend', 'fa-node'),
-('PostgreSQL', 75, 'Database', 'fa-database'),
-('Go', 70, 'Programming', 'fa-code');
+('Kotlin', 90, 'Mobile Developer', 'fa-js'),
+('Jetpack Compose', 90, 'Mobile Developer', 'fa-react'),
+('Dart', 70, 'Mobile Developer', 'fa-node'),
+('Laravel', 90, 'Backend developer', 'fa-database'),
+('Express.js', 70, 'Backend developer', 'fa-code');
 
 -- Insert sample qualifications
 INSERT INTO qualifications (type, institution, title, description, start_date, end_date, current)
