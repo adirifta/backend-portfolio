@@ -17,7 +17,7 @@ WORKDIR /app
 
 COPY --from=builder /app/main .
 # COPY --from=builder /app/.env .
-# COPY scripts/init.sql ./scripts/
+COPY scripts/init.sql ./scripts/
 
 EXPOSE 8080
 
