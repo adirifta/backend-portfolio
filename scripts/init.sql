@@ -47,7 +47,8 @@ CREATE TABLE portfolios (
 CREATE TABLE skills (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    level INTEGER CHECK (level >= 0 AND level <= 100),
+    level VARCHAR(255) NOT NULL,
+    score INTEGER CHECK (score >= 0 AND score <= 100),
     category VARCHAR(100),
     icon VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -107,11 +108,11 @@ VALUES
 -- Insert sample skills
 INSERT INTO skills (name, level, score, category, icon)
 VALUES 
-('Kotlin', 90, 'Mobile Developer', 'fa-js'),
-('Jetpack Compose', 90, 'Mobile Developer', 'fa-react'),
-('Dart', 70, 'Mobile Developer', 'fa-node'),
-('Laravel', 90, 'Backend developer', 'fa-database'),
-('Express.js', 70, 'Backend developer', 'fa-code');
+('Kotlin', 'Advanced', 90, 'Mobile Developer', 'fa-js'),
+('Jetpack Compose', 'Advanced', 90, 'Mobile Developer', 'fa-react'),
+('Dart', 'Fundamental', 70, 'Mobile Developer', 'fa-node'),
+('Laravel', 'Advanced', 90, 'Backend developer', 'fa-database'),
+('Express.js', 'Fundamental', 70, 'Backend developer', 'fa-code');
 
 -- Insert sample qualifications
 INSERT INTO qualifications (type, institution, title, description, start_date, end_date, current)
