@@ -19,8 +19,21 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          cd /var/www/portfolio-backend
+          cd /var/www
+          
+          # Clone atau pull repository
+          if [ ! -d "portfolio-backend" ]; then
+            git clone ${{ secrets.REPO_URL }} portfolio-backend
+          fi
+          
+          cd portfolio-backend
+          
+          # Force update repository
+          git fetch --all
+          git reset --hard origin/main
           git pull origin main
+          
+          # Deploy dengan Docker
           docker-compose -f docker-compose.prod.yml down
           docker-compose -f docker-compose.prod.yml up --build -d
           docker system prune -f
