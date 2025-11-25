@@ -33,7 +33,14 @@ func main() {
 
 	// CORS configuration
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://adirdk.cloud", "http://localhost:3000", "http://localhost:8080", "https://www.adirdk.cloud"},
+		AllowOrigins:     []string{
+			"https://adirdk.cloud", 
+			"https://adirdk.com",
+			"http://localhost:3000", 
+			"http://localhost:8080", 
+			"https://www.adirdk.cloud",
+			"https://www.adirdk.com", 
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
@@ -41,10 +48,17 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Handle preflight requests secara manual
+	// Jangan lupa update juga di bagian OPTIONS handler:
 	r.OPTIONS("/*path", func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		allowedOrigins := []string{"https://adirdk.cloud", "http://localhost:3000", "http://localhost:8080", "https://www.adirdk.cloud"}
+		allowedOrigins := []string{
+			"https://adirdk.cloud", 
+			"https://adirdk.com",           // <- TAMBAH INI
+			"http://localhost:3000", 
+			"http://localhost:8080", 
+			"https://www.adirdk.cloud",
+			"https://www.adirdk.com"        // <- DAN INI
+		}
 		
 		for _, allowedOrigin := range allowedOrigins {
 			if origin == allowedOrigin {
