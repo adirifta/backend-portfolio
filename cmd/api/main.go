@@ -36,10 +36,12 @@ func main() {
 		AllowOrigins:     []string{
 			"https://adirdk.cloud", 
 			"https://adirdk.com",
+			"https://dashboard.adirdk.com",
 			"http://localhost:3000", 
 			"http://localhost:8080", 
 			"https://www.adirdk.cloud",
 			"https://www.adirdk.com", 
+			"https://www.dashboard.adirdk.com",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
@@ -54,10 +56,12 @@ func main() {
 		allowedOrigins := []string{
 			"https://adirdk.cloud", 
 			"https://adirdk.com",
+			"https://dashboard.adirdk.com",
 			"http://localhost:3000", 
 			"http://localhost:8080", 
 			"https://www.adirdk.cloud",
-			"https://www.adirdk.com",
+			"https://www.adirdk.com", 
+			"https://www.dashboard.adirdk.com",
 		}
 		
 		for _, allowedOrigin := range allowedOrigins {
