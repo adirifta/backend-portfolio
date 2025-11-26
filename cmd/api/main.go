@@ -53,11 +53,11 @@ func main() {
 		origin := c.Request.Header.Get("Origin")
 		allowedOrigins := []string{
 			"https://adirdk.cloud", 
-			"https://adirdk.com",           // <- TAMBAH INI
+			"https://adirdk.com",
 			"http://localhost:3000", 
 			"http://localhost:8080", 
 			"https://www.adirdk.cloud",
-			"https://www.adirdk.com"        // <- DAN INI
+			"https://www.adirdk.com",
 		}
 		
 		for _, allowedOrigin := range allowedOrigins {
