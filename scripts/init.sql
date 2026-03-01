@@ -1,13 +1,8 @@
+-- init.sql (updated version)
 -- Database initialization script for Portfolio Backend
 
--- -- Create database
--- CREATE DATABASE portfolio_db;
-
--- -- Connect to the database
--- \c portfolio_db;
-
 -- Create users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -17,7 +12,7 @@ CREATE TABLE users (
 );
 
 -- Create about table
-CREATE TABLE abouts (
+CREATE TABLE IF NOT EXISTS abouts (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     title VARCHAR(255),
@@ -30,21 +25,32 @@ CREATE TABLE abouts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create portfolio table
-CREATE TABLE portfolios (
+-- Create portfolio table (updated)
+CREATE TABLE IF NOT EXISTS portfolios (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    image_url VARCHAR(500),
-    project_url VARCHAR(500),
     category VARCHAR(100),
     tags VARCHAR(500),
+    project_url VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create portfolio_media table (new)
+CREATE TABLE IF NOT EXISTS portfolio_media (
+    id SERIAL PRIMARY KEY,
+    portfolio_id INTEGER NOT NULL,
+    type VARCHAR(20) NOT NULL, -- 'image', 'video'
+    url VARCHAR(500) NOT NULL,
+    thumbnail VARCHAR(500),
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id) ON DELETE CASCADE
+);
+
 -- Create skills table
-CREATE TABLE skills (
+CREATE TABLE IF NOT EXISTS skills (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     level VARCHAR(255) NOT NULL,
@@ -56,7 +62,7 @@ CREATE TABLE skills (
 );
 
 -- Create qualifications table
-CREATE TABLE qualifications (
+CREATE TABLE IF NOT EXISTS qualifications (
     id SERIAL PRIMARY KEY,
     type VARCHAR(50) NOT NULL CHECK (type IN ('education', 'experience')),
     institution VARCHAR(255) NOT NULL,
@@ -71,7 +77,8 @@ CREATE TABLE qualifications (
 
 -- Insert initial admin user (password: admin123)
 INSERT INTO users (username, password, role) 
-VALUES ('admin', '$2a$10$rRyBsGS4G2NKhL2H2/1NE.6a.TL1xE1JX5nU7QKJz5V5KJz5V5KJ', 'admin');
+VALUES ('admin', '$2a$10$rRyBsGS4G2NKhL2H2/1NE.6a.TL1xE1JX5nU7QKJz5V5KJz5V5KJ', 'admin')
+ON CONFLICT (username) DO NOTHING;
 
 -- Insert sample about data
 INSERT INTO abouts (name, title, description, email, phone, address, image_url)
@@ -83,70 +90,15 @@ VALUES (
     '+1234567890', 
     '123 Main St, City, Country', 
     'https://example.com/profile.jpg'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
--- Insert sample portfolio items
-INSERT INTO portfolios (title, description, image_url, project_url, category, tags)
-VALUES 
-(
-    'E-commerce Website', 
-    'A fully functional e-commerce platform with payment integration', 
-    'https://example.com/project1.jpg', 
-    'https://example.com/project1', 
-    'Web Development', 
-    'React, Node.js, PostgreSQL'
-),
-(
-    'Mobile Fitness App', 
-    'A fitness tracking application with workout plans and progress monitoring', 
-    'https://example.com/project2.jpg', 
-    'https://example.com/project2', 
-    'Mobile Development', 
-    'React Native, Firebase'
-);
-
--- Insert sample skills
-INSERT INTO skills (name, level, score, category, icon)
-VALUES 
-('Kotlin', 'Advanced', 90, 'Mobile Developer', 'fa-js'),
-('Jetpack Compose', 'Advanced', 90, 'Mobile Developer', 'fa-react'),
-('Dart', 'Fundamental', 70, 'Mobile Developer', 'fa-node'),
-('Laravel', 'Advanced', 90, 'Backend developer', 'fa-database'),
-('Express.js', 'Fundamental', 70, 'Backend developer', 'fa-code');
-
--- Insert sample qualifications
-INSERT INTO qualifications (type, institution, title, description, start_date, end_date, current)
-VALUES 
-(
-    'education', 
-    'University of Technology', 
-    'Bachelor of Computer Science', 
-    'Specialized in software engineering and web development', 
-    '2015-09-01', 
-    '2019-06-01', 
-    false
-),
-(
-    'experience', 
-    'Tech Solutions Inc.', 
-    'Senior Full Stack Developer', 
-    'Led development of multiple web applications and mentored junior developers', 
-    '2020-01-15', 
-    NULL, 
-    true
-),
-(
-    'experience', 
-    'Web Innovations Ltd.', 
-    'Frontend Developer', 
-    'Developed user interfaces for various client projects using React', 
-    '2019-07-01', 
-    '2019-12-20', 
-    false
-);
+-- Clean up old image_url column if exists
+ALTER TABLE portfolios DROP COLUMN IF EXISTS image_url;
 
 -- Create indexes for better performance
-CREATE INDEX idx_portfolios_category ON portfolios(category);
-CREATE INDEX idx_skills_category ON skills(category);
-CREATE INDEX idx_qualifications_type ON qualifications(type);
-CREATE INDEX idx_qualifications_institution ON qualifications(institution);
+CREATE INDEX IF NOT EXISTS idx_portfolios_category ON portfolios(category);
+CREATE INDEX IF NOT EXISTS idx_portfolio_media_portfolio_id ON portfolio_media(portfolio_id);
+CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category);
+CREATE INDEX IF NOT EXISTS idx_qualifications_type ON qualifications(type);
+CREATE INDEX IF NOT EXISTS idx_qualifications_institution ON qualifications(institution);

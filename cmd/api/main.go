@@ -1,153 +1,60 @@
 package main
 
 import (
-	"backend-portfolio/config"
-	"backend-portfolio/database"
-	"backend-portfolio/handlers"
-	"backend-portfolio/middleware"
 	"log"
 	"os"
-	"time"
 
-	"github.com/gin-contrib/cors"
+	"backend-portfolio/config"
+	"backend-portfolio/database"
+	"backend-portfolio/internal/auth"
+	"backend-portfolio/internal/handler"
+	"backend-portfolio/internal/middleware"
+	"backend-portfolio/internal/repository"
+	"backend-portfolio/internal/router"
+
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Set production mode
+	// Production mode when running on Cloud Run
 	if os.Getenv("GIN_MODE") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Load configuration
 	log.Println("🔧 Loading configuration...")
 	cfg := config.LoadConfig()
 
-	// Initialize database dengan error handling yang better
 	log.Println("🗄️ Initializing database...")
 	database.InitDB(cfg)
+	db := database.GetDB()
 
-	// Setup router
+	// Services
+	jwtSvc := auth.NewJWTService(
+		cfg.JWTSecret, cfg.JWTRefreshSecret,
+		cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry,
+	)
+	cookieMgr := auth.NewCookieManager(
+		cfg.CookieDomain, cfg.CookieSecure, cfg.CookieSameSite,
+		cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry,
+	)
+	csrfSvc := middleware.NewCSRFService(jwtSvc.AccessSecret(), cookieMgr)
+
+	// Repositories
+	users := repository.NewUserRepository(db)
+	abouts := repository.NewAboutRepository(db)
+	portfolios := repository.NewPortfolioRepository(db)
+	skills := repository.NewSkillRepository(db)
+	qualifications := repository.NewQualificationRepository(db)
+
+	// Handler (all dependencies injected)
+	h := handler.New(db, users, abouts, portfolios, skills, qualifications, jwtSvc, cookieMgr, csrfSvc)
+
+	// Router
 	log.Println("🚀 Setting up router...")
-	r := gin.Default()
-
-	// CORS configuration
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{
-			"https://adirdk.cloud", 
-			"https://adirdk.com",
-			"https://dashboard.adirdk.com",
-			"http://localhost:3000", 
-			"http://localhost:8080", 
-			"https://www.adirdk.cloud",
-			"https://www.adirdk.com", 
-			"https://www.dashboard.adirdk.com",
-		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-
-	// Jangan lupa update juga di bagian OPTIONS handler:
-	r.OPTIONS("/*path", func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		allowedOrigins := []string{
-			"https://adirdk.cloud", 
-			"https://adirdk.com",
-			"https://dashboard.adirdk.com",
-			"http://localhost:3000", 
-			"http://localhost:8080", 
-			"https://www.adirdk.cloud",
-			"https://www.adirdk.com", 
-			"https://www.dashboard.adirdk.com",
-		}
-		
-		for _, allowedOrigin := range allowedOrigins {
-			if origin == allowedOrigin {
-				c.Header("Access-Control-Allow-Origin", origin)
-				c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-				c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, Accept, X-Requested-With")
-				c.Header("Access-Control-Allow-Credentials", "true")
-				c.Header("Access-Control-Max-Age", "43200") // 12 hours
-				c.Status(204)
-				return
-			}
-		}
-		c.Status(403)
-	})
-
-	// Public routes
-	r.POST("/api/login", handlers.Login)
-	r.POST("/api/reset-admin", handlers.ResetAdminPassword)
-	r.POST("/api/create-user", handlers.CreateUser)
-	r.GET("/api/about", handlers.GetAbout)
-	r.GET("/api/portfolio", handlers.GetAllPortfolio)
-	r.GET("/api/portfolio/:id", handlers.GetPortfolio)
-	r.GET("/api/skills", handlers.GetAllSkills)
-	r.GET("/api/skills/:id", handlers.GetSkill)
-	r.GET("/api/qualifications", handlers.GetAllQualifications)
-	r.GET("/api/qualifications/:id", handlers.GetQualification)
-
-	// Protected routes (admin only)
-	auth := r.Group("/api/admin")
-	auth.Use(middleware.AuthMiddleware())
-	{
-		auth.POST("/about", handlers.CreateOrUpdateAbout)
-		auth.PUT("/about/:id", handlers.UpdateAbout)
-		auth.POST("/portfolio", handlers.CreatePortfolio)
-		auth.PUT("/portfolio/:id", handlers.UpdatePortfolio)
-		auth.DELETE("/portfolio/:id", handlers.DeletePortfolio)
-		auth.POST("/skills", handlers.CreateSkill)
-		auth.PUT("/skills/:id", handlers.UpdateSkill)
-		auth.DELETE("/skills/:id", handlers.DeleteSkill)
-		auth.POST("/qualifications", handlers.CreateQualification)
-		auth.PUT("/qualifications/:id", handlers.UpdateQualification)
-		auth.DELETE("/qualifications/:id", handlers.DeleteQualification)
-	}
-
-	// Health check endpoint dengan database check
-	r.GET("/health", func(c *gin.Context) {
-		db := database.GetDB()
-		sqlDB, err := db.DB()
-		
-		if err != nil {
-			c.JSON(500, gin.H{
-				"status":  "ERROR",
-				"message": "Database connection failed",
-			})
-			return
-		}
-
-		if err := sqlDB.Ping(); err != nil {
-			c.JSON(500, gin.H{
-				"status":  "ERROR",
-				"message": "Database ping failed",
-			})
-			return
-		}
-
-		c.JSON(200, gin.H{
-			"status":  "OK",
-			"message": "Server is running",
-		})
-	})
-
-	// Root endpoint
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Backend Portfolio API is running!",
-			"version": "1.0.0",
-		})
-	})
+	r := router.SetupRouter(h, jwtSvc, csrfSvc, cfg.AllowedOrigins)
 
 	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
+	port := cfg.Port
 	if os.Getenv("K_SERVICE") != "" {
 		log.Println("🌐 Running on Cloud Run environment 🚀")
 	} else {
@@ -155,8 +62,8 @@ func main() {
 	}
 
 	log.Printf("🎯 Server starting on port %s", port)
-	log.Printf("📍 Health check available at: http://localhost:%s/health", port)
-	
+	log.Printf("📍 Health check: http://localhost:%s/health", port)
+
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("❌ Failed to start server: %v", err)
 	}

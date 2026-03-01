@@ -1,3 +1,6 @@
 .env
 .env.production
 .env.local
+/uploads/
+!uploads/.gitkeep
+.idea/
