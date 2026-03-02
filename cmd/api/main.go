@@ -51,6 +51,7 @@ func main() {
 
 	// Router
 	log.Println("🚀 Setting up router...")
+	log.Printf("🌍 CORS allowed origins: %v", cfg.AllowedOrigins)
 	r := router.SetupRouter(h, jwtSvc, csrfSvc, cfg.AllowedOrigins)
 
 	// Start server

@@ -26,7 +26,8 @@ func SetupRouter(
 	r := gin.Default()
 
 	// ── Global Middleware ──────────────────────────────────────
-	r.Use(middleware.SecurityHeaders())
+	// CORS must be applied BEFORE other middleware so preflight
+	// OPTIONS requests are answered immediately with the correct headers.
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: allowedOrigins,
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
@@ -39,6 +40,7 @@ func SetupRouter(
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+	r.Use(middleware.SecurityHeaders())
 
 	// ── Static files ──────────────────────────────────────────
 	r.Static("/uploads", "./uploads")
