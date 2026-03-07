@@ -92,6 +92,13 @@ func SetupRouter(
 		admin.DELETE("/qualifications/:id", h.DeleteQualification)
 	}
 
+	// ── Visitor tracking (public) ─────────────────────────────
+	r.POST("/api/visitors/track", h.TrackVisitor)
+	r.GET("/api/visitors/stats", h.GetVisitorStatsPublic)
+
+	// ── Visitor stats (admin — full detail including IPs) ─────
+	admin.GET("/visitors/stats", h.GetVisitorStats)
+
 	// ── Health & Info ─────────────────────────────────────────
 	r.GET("/health", h.HealthCheck)
 	r.GET("/", h.Info)

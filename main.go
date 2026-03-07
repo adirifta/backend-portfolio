@@ -14,6 +14,7 @@ import (
 	"backend-portfolio/config"
 	"backend-portfolio/database"
 	"backend-portfolio/internal/auth"
+	"backend-portfolio/internal/geoip"
 	"backend-portfolio/internal/handler"
 	"backend-portfolio/internal/middleware"
 	"backend-portfolio/internal/repository"
@@ -37,6 +38,7 @@ func main() {
 		cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry,
 	)
 	csrfSvc := middleware.NewCSRFService(jwtSvc.AccessSecret(), cookieMgr)
+	geoSvc := geoip.NewService()
 
 	// Repositories
 	users := repository.NewUserRepository(db)
@@ -44,9 +46,10 @@ func main() {
 	portfolios := repository.NewPortfolioRepository(db)
 	skills := repository.NewSkillRepository(db)
 	qualifications := repository.NewQualificationRepository(db)
+	visitors := repository.NewVisitorRepository(db)
 
 	// Handler (all dependencies injected)
-	h := handler.New(db, users, abouts, portfolios, skills, qualifications, jwtSvc, cookieMgr, csrfSvc)
+	h := handler.New(db, users, abouts, portfolios, skills, qualifications, visitors, jwtSvc, cookieMgr, csrfSvc, geoSvc)
 
 	// Router
 	r := router.SetupRouter(h, jwtSvc, csrfSvc, cfg.AllowedOrigins)

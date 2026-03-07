@@ -52,3 +52,13 @@ type QualificationRepository interface {
 	Save(qualification *models.Qualification) error
 	Delete(id uint) error
 }
+
+// VisitorRepository abstracts visitor tracking data access.
+type VisitorRepository interface {
+	Record(visitor *models.Visitor) error
+	GetStats() (*models.VisitorStats, error)
+	GetDailyStats(days int) ([]models.ChartDataPoint, error)
+	GetMonthlyStats(months int) ([]models.ChartDataPoint, error)
+	GetTopPages(limit int) ([]models.PageVisitCount, error)
+	GetRecentVisitors(limit int) ([]models.Visitor, error)
+}
