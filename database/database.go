@@ -107,6 +107,7 @@ func InitDB(cfg *config.Config) {
 		&models.PortfolioMedia{},
 		&models.Skill{},
 		&models.Qualification{},
+		&models.Visitor{},
 	)
 	if err != nil {
 		log.Fatalf("❌ Failed to migrate database: %v", err)

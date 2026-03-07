@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"backend-portfolio/internal/auth"
+	"backend-portfolio/internal/geoip"
 	"backend-portfolio/internal/middleware"
 	"backend-portfolio/internal/repository"
 
@@ -26,10 +27,12 @@ type Handler struct {
 	portfolios     repository.PortfolioRepository
 	skills         repository.SkillRepository
 	qualifications repository.QualificationRepository
+	visitors       repository.VisitorRepository
 
 	jwt    *auth.JWTService
 	cookie *auth.CookieManager
 	csrf   *middleware.CSRFService
+	geoip  *geoip.Service
 }
 
 // New creates a Handler with all required dependencies.
@@ -40,9 +43,11 @@ func New(
 	portfolios repository.PortfolioRepository,
 	skills repository.SkillRepository,
 	qualifications repository.QualificationRepository,
+	visitors repository.VisitorRepository,
 	jwt *auth.JWTService,
 	cookie *auth.CookieManager,
 	csrf *middleware.CSRFService,
+	geo *geoip.Service,
 ) *Handler {
 	return &Handler{
 		db:             db,
@@ -51,9 +56,11 @@ func New(
 		portfolios:     portfolios,
 		skills:         skills,
 		qualifications: qualifications,
+		visitors:       visitors,
 		jwt:            jwt,
 		cookie:         cookie,
 		csrf:           csrf,
+		geoip:          geo,
 	}
 }
 
