@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -95,12 +96,12 @@ func (cm *CookieManager) SameSite() http.SameSite { return cm.sameSite }
 func (cm *CookieManager) AccessMaxAge() int { return cm.accessMaxAge }
 
 func parseSameSite(s string) http.SameSite {
-	switch s {
-	case "Lax":
+	switch strings.ToLower(s) {
+	case "lax":
 		return http.SameSiteLaxMode
-	case "None":
+	case "none":
 		return http.SameSiteNoneMode
-	case "Strict":
+	case "strict":
 		return http.SameSiteStrictMode
 	default:
 		return http.SameSiteStrictMode
