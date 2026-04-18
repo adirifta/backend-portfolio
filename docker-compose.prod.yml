@@ -17,7 +17,7 @@ services:
       - DOMAIN=${DOMAIN}
       - COOKIE_DOMAIN=${COOKIE_DOMAIN}
       - COOKIE_SECURE=true
-      - COOKIE_SAMESITE=Lax
+      - COOKIE_SAMESITE=None
       - RESET_SECRET=${RESET_SECRET}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     depends_on:
