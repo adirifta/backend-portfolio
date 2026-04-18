@@ -1,6 +1,6 @@
 # Backend Portfolio API
 
-REST API backend for a personal portfolio website, built with Go (Gin framework), PostgreSQL (GORM), and secured with HTTP-only cookie JWT authentication + CSRF protection.
+REST API backend for a personal portfolio website, built with Go (Gin framework), PostgreSQL (GORM), and secured with JWT Bearer token authentication (no cookies, no CSRF needed).
 
 ## Table of Contents
 
@@ -12,10 +12,10 @@ REST API backend for a personal portfolio website, built with Go (Gin framework)
 - [Getting Started](#getting-started)
 - [API Reference](#api-reference)
 - [Postman Testing Guide](#postman-testing-guide)
-- [Frontend Integration](#frontend-integration)
-- [Deployment](#deployment)
 - [Security Features](#security-features)
 - [Database Management](#database-management)
+- [JWT Bearer Authentication](#jwt-bearer-authentication)
+- [Frontend Integration](#frontend-integration)
 
 ---
 
@@ -64,8 +64,7 @@ backend-portfolio/
 │       └── main.go              # Production entrypoint (Cloud Run / Docker)
 ├── internal/                    # Private application packages (Go convention)
 │   ├── auth/
-│   │   ├── jwt.go               # JWTService — token generation & validation (DI)
-│   │   └── cookie.go            # CookieManager — HTTP cookie management (DI)
+│   │   └── jwt.go               # JWTService — JWT token generation & validation (DI)
 │   ├── handler/
 │   │   ├── handler.go           # Handler struct with injected dependencies
 │   │   ├── about.go             # About CRUD handlers
@@ -75,9 +74,8 @@ backend-portfolio/
 │   │   ├── qualification.go     # Qualification CRUD handlers
 │   │   └── skill.go             # Skill CRUD handlers (category, level, score)
 │   ├── middleware/
-│   │   ├── auth.go              # JWT cookie auth middleware (DI)
-│   │   ├── csrf.go              # Signed Double Submit Cookie CSRF (DI)
-│   │   └── security.go          # Security response headers
+│   │   ├── auth.go              # JWT Bearer token auth middleware (DI)
+│   │   └── security.go          # Security response headers (CSP, X-Frame-Options)
 │   ├── repository/
 │   │   ├── interfaces.go        # Repository interfaces (DIP)
 │   │   ├── about.go             # AboutRepository — GORM implementation
