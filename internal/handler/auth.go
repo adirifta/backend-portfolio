@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"backend-portfolio/internal/auth"
 	"backend-portfolio/models"
 	"net/http"
 	"os"
