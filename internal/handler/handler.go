@@ -12,7 +12,6 @@ import (
 
 	"backend-portfolio/internal/auth"
 	"backend-portfolio/internal/geoip"
-	"backend-portfolio/internal/middleware"
 	"backend-portfolio/internal/repository"
 
 	"github.com/gin-gonic/gin"
@@ -29,10 +28,8 @@ type Handler struct {
 	qualifications repository.QualificationRepository
 	visitors       repository.VisitorRepository
 
-	jwt    *auth.JWTService
-	cookie *auth.CookieManager
-	csrf   *middleware.CSRFService
-	geoip  *geoip.Service
+	jwt   *auth.JWTService
+	geoip *geoip.Service
 }
 
 // New creates a Handler with all required dependencies.
@@ -45,8 +42,6 @@ func New(
 	qualifications repository.QualificationRepository,
 	visitors repository.VisitorRepository,
 	jwt *auth.JWTService,
-	cookie *auth.CookieManager,
-	csrf *middleware.CSRFService,
 	geo *geoip.Service,
 ) *Handler {
 	return &Handler{
@@ -58,8 +53,6 @@ func New(
 		qualifications: qualifications,
 		visitors:       visitors,
 		jwt:            jwt,
-		cookie:         cookie,
-		csrf:           csrf,
 		geoip:          geo,
 	}
 }

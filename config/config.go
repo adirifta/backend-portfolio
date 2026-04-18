@@ -15,12 +15,7 @@ type Config struct {
 	JWTSecret        string
 	JWTRefreshSecret string
 	Port             string
-
-	// Cookie settings
-	CookieDomain   string
-	CookieSecure   bool
-	CookieSameSite string
-	AllowedOrigins []string
+	AllowedOrigins   []string
 
 	// Token expiry (in minutes)
 	AccessTokenExpiry  int
@@ -28,8 +23,6 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
-	secure := getEnv("COOKIE_SECURE", "true") == "true"
-
 	// Default allowed origins (production domains + local dev)
 	defaultOrigins := []string{
 		"https://adirdk.cloud",
@@ -61,9 +54,6 @@ func LoadConfig() *Config {
 		JWTSecret:          getEnv("JWT_SECRET", "your-secret-key"),
 		JWTRefreshSecret:   getEnv("JWT_REFRESH_SECRET", "your-refresh-secret-key"),
 		Port:               getEnv("PORT", "8080"),
-		CookieDomain:       getEnv("COOKIE_DOMAIN", ""),
-		CookieSecure:       secure,
-		CookieSameSite:     getEnv("COOKIE_SAMESITE", "Strict"),
 		AllowedOrigins:     allowedOrigins,
 		AccessTokenExpiry:  15,    // 15 minutes
 		RefreshTokenExpiry: 10080, // 7 days

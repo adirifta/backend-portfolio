@@ -20,7 +20,6 @@ import (
 func SetupRouter(
 	h *handler.Handler,
 	jwtSvc *auth.JWTService,
-	csrfSvc *middleware.CSRFService,
 	allowedOrigins []string,
 ) *gin.Engine {
 	r := gin.Default()
@@ -34,10 +33,9 @@ func SetupRouter(
 		AllowHeaders: []string{
 			"Origin", "Content-Type", "Authorization",
 			"Accept", "X-Requested-With", "Content-Disposition",
-			"X-XSRF-TOKEN",
 		},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
 	r.Use(middleware.SecurityHeaders())
@@ -62,10 +60,9 @@ func SetupRouter(
 	r.GET("/api/auth/me", middleware.AuthMiddleware(jwtSvc), h.GetMe)
 	r.POST("/api/login", h.Login) // backward compatibility
 
-	// ── Protected routes (admin only — cookie auth + CSRF) ───
+	// ── Protected routes (admin only — Bearer token auth) ─────
 	admin := r.Group("/api/admin")
 	admin.Use(middleware.AuthMiddleware(jwtSvc))
-	admin.Use(csrfSvc.Middleware())
 	{
 		// User management
 		admin.POST("/create-user", h.CreateUser)

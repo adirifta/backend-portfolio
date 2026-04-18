@@ -15,7 +15,20 @@ type loginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// Login authenticates a user and sets HTTP-only cookies with access + refresh tokens.
+type authResponse struct {
+	Message      string   `json:"message"`
+	AccessToken  string   `json:"access_token"`
+	RefreshToken string   `json:"refresh_token"`
+	User         userInfo `json:"user"`
+}
+
+type userInfo struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+	Role     string `json:"role"`
+}
+
+// Login authenticates a user and returns JWT tokens in response body.
 func (h *Handler) Login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -46,37 +59,36 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	h.cookie.SetTokenCookies(c, accessToken, refreshToken)
-	h.csrf.SetCSRFCookie(c)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"user": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"role":     user.Role,
+	c.JSON(http.StatusOK, authResponse{
+		Message:      "Login successful",
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		User: userInfo{
+			ID:       user.ID,
+			Username: user.Username,
+			Role:     user.Role,
 		},
 	})
 }
 
-// Logout clears the authentication and CSRF cookies.
+// Logout just returns success (frontend removes token from storage).
 func (h *Handler) Logout(c *gin.Context) {
-	h.cookie.ClearTokenCookies(c)
-	h.csrf.ClearCSRFCookie(c)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
-// RefreshToken validates the refresh cookie and issues a new token pair (rotation).
+// RefreshToken validates the refresh token and issues a new token pair.
 func (h *Handler) RefreshToken(c *gin.Context) {
-	cookie, err := c.Cookie(auth.RefreshTokenCookieName)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token not found"})
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "refresh_token is required"})
 		return
 	}
 
-	claims, err := h.jwt.ValidateRefreshToken(cookie)
+	claims, err := h.jwt.ValidateRefreshToken(req.RefreshToken)
 	if err != nil {
-		h.cookie.ClearTokenCookies(c)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
 		return
 	}
@@ -84,7 +96,6 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 	// Verify the user still exists
 	user, err := h.users.FindByID(claims.UserID)
 	if err != nil {
-		h.cookie.ClearTokenCookies(c)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User no longer exists"})
 		return
 	}
@@ -101,10 +112,16 @@ func (h *Handler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	h.cookie.SetTokenCookies(c, newAccess, newRefresh)
-	h.csrf.SetCSRFCookie(c)
-
-	c.JSON(http.StatusOK, gin.H{"message": "Token refreshed successfully"})
+	c.JSON(http.StatusOK, authResponse{
+		Message:      "Token refreshed successfully",
+		AccessToken:  newAccess,
+		RefreshToken: newRefresh,
+		User: userInfo{
+			ID:       user.ID,
+			Username: user.Username,
+			Role:     user.Role,
+		},
+	})
 }
 
 // GetMe returns the currently authenticated user info.

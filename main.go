@@ -16,7 +16,6 @@ import (
 	"backend-portfolio/internal/auth"
 	"backend-portfolio/internal/geoip"
 	"backend-portfolio/internal/handler"
-	"backend-portfolio/internal/middleware"
 	"backend-portfolio/internal/repository"
 	"backend-portfolio/internal/router"
 )
@@ -33,11 +32,6 @@ func main() {
 		cfg.JWTSecret, cfg.JWTRefreshSecret,
 		cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry,
 	)
-	cookieMgr := auth.NewCookieManager(
-		cfg.CookieDomain, cfg.CookieSecure, cfg.CookieSameSite,
-		cfg.AccessTokenExpiry, cfg.RefreshTokenExpiry,
-	)
-	csrfSvc := middleware.NewCSRFService(jwtSvc.AccessSecret(), cookieMgr)
 	geoSvc := geoip.NewService()
 
 	// Repositories
@@ -49,10 +43,10 @@ func main() {
 	visitors := repository.NewVisitorRepository(db)
 
 	// Handler (all dependencies injected)
-	h := handler.New(db, users, abouts, portfolios, skills, qualifications, visitors, jwtSvc, cookieMgr, csrfSvc, geoSvc)
+	h := handler.New(db, users, abouts, portfolios, skills, qualifications, visitors, jwtSvc, geoSvc)
 
 	// Router
-	r := router.SetupRouter(h, jwtSvc, csrfSvc, cfg.AllowedOrigins)
+	r := router.SetupRouter(h, jwtSvc, cfg.AllowedOrigins)
 
 	log.Printf("🎯 Server starting on port %s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {

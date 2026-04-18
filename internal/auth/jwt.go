@@ -1,4 +1,4 @@
-// Package auth provides JWT token generation, validation, and cookie management.
+// Package auth provides JWT token generation and validation.
 package auth
 
 import (
@@ -52,11 +52,6 @@ func (s *JWTService) ValidateAccessToken(tokenString string) (*Claims, error) {
 // ValidateRefreshToken validates and parses a refresh token string.
 func (s *JWTService) ValidateRefreshToken(tokenString string) (*Claims, error) {
 	return s.validateToken(tokenString, s.refreshSecret)
-}
-
-// AccessSecret returns the access token HMAC key (used by CSRF for signing).
-func (s *JWTService) AccessSecret() []byte {
-	return s.accessSecret
 }
 
 func (s *JWTService) generateToken(userID uint, role string, secret []byte, expiry time.Duration) (string, error) {

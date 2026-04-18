@@ -10,26 +10,18 @@ import (
 )
 
 // AuthMiddleware returns a Gin middleware that validates the access token
-// from the HTTP-only cookie (preferred) or Authorization header (fallback).
-// Only "admin" role is allowed through.
+// from the Authorization: Bearer header. Only "admin" role is allowed through.
 func AuthMiddleware(jwt *auth.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
 
-		// 1. Prefer HTTP-only cookie
-		if cookie, err := c.Cookie(auth.AccessTokenCookieName); err == nil && cookie != "" {
-			tokenString = cookie
-		}
-
-		// 2. Fallback: Authorization Bearer header (for non-browser API clients)
-		if tokenString == "" {
-			if h := c.GetHeader("Authorization"); h != "" {
-				tokenString = strings.TrimPrefix(h, "Bearer ")
-			}
+		// Extract token from Authorization: Bearer header
+		if h := c.GetHeader("Authorization"); h != "" {
+			tokenString = strings.TrimPrefix(h, "Bearer ")
 		}
 
 		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required (Bearer token)"})
 			c.Abort()
 			return
 		}
@@ -53,19 +45,14 @@ func AuthMiddleware(jwt *auth.JWTService) gin.HandlerFunc {
 	}
 }
 
-// OptionalAuthMiddleware extracts user info from the token if present,
+// OptionalAuthMiddleware extracts user info from the Bearer token if present,
 // but does not block the request if absent.
 func OptionalAuthMiddleware(jwt *auth.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var tokenString string
 
-		if cookie, err := c.Cookie(auth.AccessTokenCookieName); err == nil && cookie != "" {
-			tokenString = cookie
-		}
-		if tokenString == "" {
-			if h := c.GetHeader("Authorization"); h != "" {
-				tokenString = strings.TrimPrefix(h, "Bearer ")
-			}
+		if h := c.GetHeader("Authorization"); h != "" {
+			tokenString = strings.TrimPrefix(h, "Bearer ")
 		}
 
 		if tokenString != "" {
