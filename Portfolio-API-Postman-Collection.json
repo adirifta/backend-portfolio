@@ -1,0 +1,728 @@
+{
+  "info": {
+    "name": "Backend Portfolio API - JWT Bearer Authentication",
+    "description": "Complete API collection for Portfolio Backend with JWT Bearer tokens (migrated from CSRF + Cookie auth)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0",
+    "lastUpdated": "2026-04-18"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login and get JWT tokens. Save access_token and refresh_token to variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh expired access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Get current authenticated user information. Requires Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            },
+            "description": "Logout user (remove token from frontend)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📄 About (Public)",
+      "item": [
+        {
+          "name": "Get About",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/about",
+              "host": ["{{base_url}}"],
+              "path": ["api", "about"]
+            },
+            "description": "Get about information (public endpoint)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📄 About (Admin)",
+      "item": [
+        {
+          "name": "Create About",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Your Name\",\n  \"title\": \"Full Stack Developer\",\n  \"description_singkat\": \"Short description\",\n  \"description_panjang\": \"Long description\",\n  \"email\": \"email@example.com\",\n  \"phone\": \"+62xxx\",\n  \"address\": \"City, Country\",\n  \"image_url\": \"https://example.com/image.jpg\",\n  \"linkedin_url\": \"https://linkedin.com/in/username\",\n  \"github_url\": \"https://github.com/username\",\n  \"instagram_url\": \"https://instagram.com/username\",\n  \"website_url\": \"https://yourwebsite.com\",\n  \"resume_url\": \"https://example.com/resume.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/about",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "about"]
+            },
+            "description": "Create about information (Admin only, requires Bearer token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update About",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"title\": \"Senior Developer\",\n  \"description_singkat\": \"Updated short description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/about/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "about", "1"]
+            },
+            "description": "Update about information by ID (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎨 Portfolio (Public)",
+      "item": [
+        {
+          "name": "Get All Portfolio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/portfolio",
+              "host": ["{{base_url}}"],
+              "path": ["api", "portfolio"]
+            },
+            "description": "Get all portfolio items with media files (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Portfolio by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/portfolio/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "portfolio", "1"]
+            },
+            "description": "Get single portfolio item by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎨 Portfolio (Admin)",
+      "item": [
+        {
+          "name": "Create Portfolio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Project Title\",\n  \"description\": \"Project description\",\n  \"category\": \"Web Development\",\n  \"tags\": \"React, Node.js, PostgreSQL\",\n  \"project_url\": \"https://example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/portfolio",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "portfolio"]
+            },
+            "description": "Create portfolio item (Admin only, requires Bearer token)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Portfolio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Project Title\",\n  \"description\": \"Updated description\",\n  \"category\": \"Mobile Development\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/portfolio/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "portfolio", "1"]
+            },
+            "description": "Update portfolio item by ID (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Portfolio",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/portfolio/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "portfolio", "1"]
+            },
+            "description": "Delete portfolio item by ID (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Portfolio Media",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/portfolio-media/1/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "portfolio-media", "1", "1"]
+            },
+            "description": "Delete specific media file from portfolio (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💼 Skills (Public)",
+      "item": [
+        {
+          "name": "Get All Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills"]
+            },
+            "description": "Get all skills (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Skills by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/category",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "category"]
+            },
+            "description": "Get skills grouped by category (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Skill by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "1"]
+            },
+            "description": "Get single skill by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💼 Skills (Admin)",
+      "item": [
+        {
+          "name": "Create Skill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"React\",\n  \"level\": \"Advanced\",\n  \"score\": 90,\n  \"category\": \"Frontend\",\n  \"icon\": \"react-icon\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "skills"]
+            },
+            "description": "Create new skill (Admin only). Levels: Beginner, Intermediate, Advanced, Expert"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Skill",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"React\",\n  \"level\": \"Expert\",\n  \"score\": 95\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/skills/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "skills", "1"]
+            },
+            "description": "Update skill by ID (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/skills/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "skills", "1"]
+            },
+            "description": "Delete skill by ID (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎓 Qualifications (Public)",
+      "item": [
+        {
+          "name": "Get All Qualifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/qualifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "qualifications"]
+            },
+            "description": "Get all qualifications (education & experience) (public)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Qualification by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/qualifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "qualifications", "1"]
+            },
+            "description": "Get single qualification by ID"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎓 Qualifications (Admin)",
+      "item": [
+        {
+          "name": "Create Qualification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"education\",\n  \"institution\": \"University Name\",\n  \"title\": \"Bachelor of Computer Science\",\n  \"description\": \"Description of the degree\",\n  \"start_date\": \"2020-01-01T00:00:00Z\",\n  \"end_date\": \"2024-06-01T00:00:00Z\",\n  \"current\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/qualifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "qualifications"]
+            },
+            "description": "Create qualification (Admin only). Type: education or experience"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Qualification",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Developer\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/qualifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "qualifications", "1"]
+            },
+            "description": "Update qualification by ID (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Qualification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/qualifications/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "qualifications", "1"]
+            },
+            "description": "Delete qualification by ID (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 User Management (Admin)",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"securepassword123\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/create-user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "create-user"]
+            },
+            "description": "Create new user (Admin only, requires Bearer token, password min 8 chars)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Admin Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "X-Reset-Secret",
+                "value": "your-reset-secret"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_password\": \"newadminpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/reset-admin",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reset-admin"]
+            },
+            "description": "Reset admin password (requires X-Reset-Secret header and env var RESET_SECRET)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Visitor Analytics",
+      "item": [
+        {
+          "name": "Track Visitor (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"/api/portfolio\",\n  \"referer\": \"https://example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/visitors/track",
+              "host": ["{{base_url}}"],
+              "path": ["api", "visitors", "track"]
+            },
+            "description": "Record a page visitor (public endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Public Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/visitors/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "visitors", "stats"]
+            },
+            "description": "Get public visitor statistics (limited info)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Admin Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/visitors/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "visitors", "stats"]
+            },
+            "description": "Get detailed visitor statistics including IPs and user agents (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health & Info",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if server and database are running"
+          },
+          "response": []
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            },
+            "description": "Get API information"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
