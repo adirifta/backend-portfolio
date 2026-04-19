@@ -2,6 +2,8 @@
 
 REST API backend for a personal portfolio website, built with Go (Gin framework), PostgreSQL (GORM), and secured with JWT Bearer token authentication (no cookies, no CSRF needed).
 
+> Migration note: This project now uses JWT Bearer only. If you see any old cookie/CSRF examples in historical sections, treat them as legacy and follow `JWT-BEARER-MIGRATION.md` and `QUICK-REFERENCE.md`.
+
 ## Table of Contents
 
 - [Architecture](#architecture)
@@ -24,8 +26,8 @@ REST API backend for a personal portfolio website, built with Go (Gin framework)
 ```
 ┌─────────────┐    HTTPS     ┌───────────────────────────────────────────────┐
 │   Frontend   │◄────────────►│               Gin HTTP Server                 │
-│  (React/Next)│  Cookies +   │                                               │
-│              │  CSRF Header │  ┌──────────────┐  ┌───────────────────────┐  │
+│  (React/Next)│  Bearer JWT  │                                               │
+│              │  Header      │  ┌──────────────┐  ┌───────────────────────┐  │
 └─────────────┘              │  │  Middleware   │  │  Handler (DI struct)  │  │
                               │  │ ┌──────────┐ │  │ ┌──────┐ ┌────────┐  │  │
                               │  │ │  CORS    │ │  │ │ Auth │ │Portfol.│  │  │
@@ -34,8 +36,6 @@ REST API backend for a personal portfolio website, built with Go (Gin framework)
                               │  │ │ Headers  │ │  │ ├──────┤ ├────────┤  │  │
                               │  │ ├──────────┤ │  │ │Quals │ │ Health │  │  │
                               │  │ │  Auth    │ │  │ └──────┘ └────────┘  │  │
-                              │  │ ├──────────┤ │  └──────────┬────────────┘  │
-                              │  │ │  CSRF    │ │             │ (interfaces)  │
                               │  │ └──────────┘ │  ┌──────────▼────────────┐  │
                               │  └──────────────┘  │  Repository (GORM)    │  │
                               │                     └──────────┬────────────┘  │
@@ -128,8 +128,8 @@ backend-portfolio/
 | `internal/router/` — shared router | Both main.go files call the same `SetupRouter()` — routes defined once (DRY) |
 | Constructor injection | No global mutable state; all dependencies explicit in `handler.New()` |
 | Repository pattern with interfaces | Decouples handlers from GORM; enables unit testing with mocks |
-| Cookie-based JWT | Immune to XSS token theft (HttpOnly cookies) |
-| Signed Double Submit Cookie | Stateless CSRF without database storage |
+| JWT Bearer header | Stateless auth via explicit `Authorization: Bearer` |
+| No CSRF middleware | Bearer headers are not vulnerable to CSRF cookie attacks |
 
 ---
 
@@ -137,12 +137,12 @@ backend-portfolio/
 
 ### Token Pair System
 
-The API uses a **dual token architecture**:
+The API uses a **dual JWT Bearer token architecture**:
 
 | Token | Type | Expiry | Storage | Purpose |
 |-------|------|--------|---------|---------|
-| Access Token | JWT (HS256) | 15 minutes | `access_token` cookie (HttpOnly, Secure, SameSite=Strict) | Authenticate API requests |
-| Refresh Token | JWT (HS256) | 7 days | `refresh_token` cookie (HttpOnly, Secure, SameSite=Strict, Path=/api/auth/refresh) | Obtain new access tokens |
+| Access Token | JWT (HS256) | 15 minutes | Frontend storage (`sessionStorage` or `localStorage`) | Authenticate API requests |
+| Refresh Token | JWT (HS256) | 7 days | Frontend storage (`sessionStorage` or `localStorage`) | Obtain new access tokens |
 
 ### Login Flow
 
@@ -150,86 +150,38 @@ The API uses a **dual token architecture**:
 Client                              Server
   │                                    │
   ├──POST /api/auth/login──────────────►│
-  │  {"username":"admin","password":…}  │
+  │  {"username":"admin","password":"..."}
   │                                    │
-  │◄─────────Set-Cookie: access_token──┤
-  │◄─────────Set-Cookie: refresh_token─┤
-  │◄─────────Set-Cookie: csrf_token────┤  (readable by JS)
-  │◄─────────Set-Cookie: csrf_token_sig┤  (HttpOnly signature)
-  │◄─────────200 OK {user info}────────┤
-  │                                    │
-```
-
-### Token Refresh Flow
-
-```
-Client                              Server
-  │                                    │
-  ├──POST /api/auth/refresh────────────►│  (refresh_token cookie auto-sent)
-  │                                    │
-  │  Server validates refresh token,    │
-  │  verifies user still exists,        │
-  │  generates new token pair           │
-  │                                    │
-  │◄─────────Set-Cookie: new tokens────┤  (token rotation)
-  │◄─────────Set-Cookie: new CSRF──────┤
-  │◄─────────200 OK───────────────────┤
+  │◄─────────200 OK────────────────────┤
+  │  {                                 │
+  │    "access_token": "eyJ...",      │
+  │    "refresh_token": "eyJ...",     │
+  │    "user": {...}                  │
+  │  }                                 │
   │                                    │
 ```
 
 ### Request Authentication
 
 ```
-Client                              Server
-  │                                    │
-  ├──PUT /api/admin/about/1────────────►│
-  │  Cookie: access_token=eyJ…         │
-  │  X-XSRF-TOKEN: abc123…            │
-  │                                    │
-  │  AuthMiddleware:                    │
-  │    1. Read access_token cookie      │
-  │    2. Validate JWT signature        │
-  │    3. Check role == "admin"         │
-  │  CSRFMiddleware:                    │
-  │    4. Compare header vs cookie      │
-  │    5. Verify HMAC signature         │
-  │                                    │
-  │◄─────────200 OK───────────────────┤
-  │                                    │
+GET /api/admin/users
+Authorization: Bearer <access_token>
 ```
 
-### Cookie Properties
+### Token Refresh
 
-| Cookie | HttpOnly | Secure | SameSite | Path | MaxAge |
-|--------|----------|--------|----------|------|--------|
-| `access_token` | ✅ Yes | ✅ Yes* | Strict | `/` | 15 min |
-| `refresh_token` | ✅ Yes | ✅ Yes* | Strict | `/api/auth/refresh` | 7 days |
-| `csrf_token` | ❌ No (JS reads it) | ✅ Yes* | Strict | `/` | 15 min |
-| `csrf_token_sig` | ✅ Yes | ✅ Yes* | Strict | `/` | 15 min |
+```
+POST /api/auth/refresh
+Content-Type: application/json
 
-\* `Secure` is configurable via `COOKIE_SECURE` env var. Set to `false` for local HTTP development.
+{
+  "refresh_token": "<refresh_token>"
+}
+```
 
----
+### CSRF Status
 
-## CSRF Protection
-
-Uses the **Signed Double Submit Cookie** pattern (OWASP recommended for stateless architectures).
-
-### How It Works
-
-1. **On login/refresh:** Server generates a random token, HMAC-signs it with `JWT_SECRET`, stores the token in a readable cookie (`csrf_token`) and the signature in an HttpOnly cookie (`csrf_token_sig`).
-2. **On mutation requests (POST/PUT/DELETE):** Frontend reads `csrf_token` cookie value and sends it in the `X-XSRF-TOKEN` header.
-3. **Server validates:** Compares the header value against the cookie, then verifies the HMAC signature matches — ensuring the token was server-issued.
-
-### Why No Database?
-
-The HMAC signature proves the token was created by this server (only this server knows `JWT_SECRET`). An attacker cannot forge a valid token+signature pair without the secret key.
-
-### Bypasses
-
-CSRF validation is **skipped** for:
-- `GET`, `HEAD`, `OPTIONS` methods (safe/idempotent)
-- Requests using `Authorization: Bearer` header (API clients, not vulnerable to CSRF)
+CSRF middleware is removed from active routes because authentication no longer relies on cookies.
 
 ---
 
@@ -243,12 +195,9 @@ CSRF validation is **skipped** for:
 | `DB_PASSWORD` | *(empty)* | ✅ | PostgreSQL password |
 | `DB_NAME` | `portfolio-db` | ✅ | PostgreSQL database name |
 | `DB_INSTANCE_NAME` | *(empty)* | ❌ | Cloud SQL instance (Cloud Run only) |
-| `JWT_SECRET` | `your-secret-key` | ✅ | HMAC key for access tokens + CSRF signing |
+| `JWT_SECRET` | `your-secret-key` | ✅ | HMAC key for access tokens |
 | `JWT_REFRESH_SECRET` | `your-refresh-secret-key` | ✅ | HMAC key for refresh tokens |
 | `PORT` | `8080` | ❌ | Server listen port |
-| `COOKIE_DOMAIN` | *(empty)* | ❌ | Cookie domain (e.g., `.adirdk.com`) |
-| `COOKIE_SECURE` | `true` | ❌ | Set to `false` for local HTTP dev |
-| `COOKIE_SAMESITE` | `Strict` | ❌ | `Strict`, `Lax`, or `None` |
 | `ALLOWED_ORIGINS` | *(hardcoded list)* | ❌ | Comma-separated CORS origins override |
 | `RESET_SECRET` | *(empty)* | ❌ | Secret for admin password reset endpoint |
 | `GIN_MODE` | `debug` | ❌ | Set to `release` for production |
@@ -467,56 +416,79 @@ X-XSRF-TOKEN: <value_from_csrf_token_cookie>
 
 ## Postman Testing Guide
 
-### Setup
+### Quick Start
+1. **Import Collection:** Open Postman and import `Portfolio-API-Postman-Collection.json`
+2. **Set Environment Variables:**
+   - `base_url`: `http://localhost:8080`
+   - `access_token`: (will be set after login)
+   - `refresh_token`: (will be set after login)
+3. **Login First:** Call `POST /api/auth/login` to get tokens
+4. **All Set!** Tokens are automatically added to protected requests
 
-1. Open Postman and create a new Collection.
-2. Go to **Settings** (gear icon) and ensure **"Automatically follow redirects"** is enabled.
-3. Cookies are handled automatically by Postman when the domain matches.
+### Authentication Flow
 
-### Step 1: Login
+All tokens are now returned in **JSON response body** (not cookies):
 
-```
+**Step 1: Login**
+```bash
 POST http://localhost:8080/api/auth/login
-Body (JSON):
+Content-Type: application/json
+
 {
   "username": "admin",
   "password": "your_password"
 }
 ```
 
-After successful login, check the **Cookies** tab in Postman — you should see:
-- `access_token`
-- `refresh_token`
-- `csrf_token`
-- `csrf_token_sig`
-
-### Step 2: Copy CSRF Token
-
-1. Click the **Cookies** link under the Send button (or go to **Manage Cookies**).
-2. Find the `csrf_token` cookie value (e.g., `a1b2c3d4e5f6...`).
-3. Copy this value.
-
-### Step 3: Make Admin Requests
-
-For any `POST`, `PUT`, or `DELETE` to `/api/admin/*`:
-
-1. The `access_token` cookie is sent automatically.
-2. Add header: `X-XSRF-TOKEN` = `<csrf_token_value_from_step_2>`
-3. Send the request.
-
-### Step 4: Refresh Token
-
+**Response:**
+```json
+{
+  "message": "Login successful",
+  "access_token": "eyJhbGc...",
+  "refresh_token": "eyJhbGc...",
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin"
+  }
+}
 ```
+
+**Step 2: Use Token for Protected Endpoints**
+```bash
+GET http://localhost:8080/api/admin/visitors/stats
+Authorization: Bearer <access_token>
+```
+
+**Step 3: Refresh Token When Expired**
+```bash
 POST http://localhost:8080/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "<refresh_token>"
+}
 ```
 
-No body needed — the `refresh_token` cookie is sent automatically. New cookies are set in the response.
-
-### Step 5: Check Session
-
-```
+**Step 4: Check Current User**
+```bash
 GET http://localhost:8080/api/auth/me
+Authorization: Bearer <access_token>
 ```
+
+### Important Changes from Previous Version
+- ✅ **No CSRF tokens needed** — Bearer tokens immune to CSRF
+- ✅ **No X-XSRF-TOKEN header** — Removed completely
+- ✅ **No cookies for auth** — All tokens in response body
+- ✅ **Bearer header required** — Add `Authorization: Bearer <token>` to protected requests
+- ✅ **Token refresh via JSON body** — Send `{"refresh_token": "..."}` instead of automatic cookie extraction
+
+### API Testing Guide
+See **[API-TESTING-GUIDE.md](API-TESTING-GUIDE.md)** for:
+- Complete endpoint reference (27+ endpoints)
+- curl command examples
+- Common issues & solutions
+- Security verification checklist
 
 Returns current user info if authenticated.
 

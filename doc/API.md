@@ -4,6 +4,8 @@
 
 Backend Portfolio is a RESTful API built with Go and Gin framework for managing a personal portfolio website. It provides endpoints for managing portfolio items, skills, qualifications, authentication, and visitor tracking.
 
+> Migration note: Authentication is JWT Bearer only. Cookie/CSRF examples from older revisions are legacy and should not be used.
+
 **Framework:** Gin 1.9.1  
 **Database:** PostgreSQL with GORM ORM  
 **Go Version:** 1.21+  
@@ -25,20 +27,21 @@ Backend Portfolio is a RESTful API built with Go and Gin framework for managing 
 
 ## Authentication
 
-This API uses **JWT (JSON Web Tokens)** for authentication with the following mechanisms:
+This API uses **JWT Bearer tokens** for authentication.
 
-### Cookie-Based Authentication
-- Access tokens and refresh tokens are stored in **HTTP-only cookies**
-- CSRF protection is enabled for protected routes
-- Cookies are automatically set on login and cleared on logout
+### Bearer Authentication
+- Login returns `access_token` and `refresh_token` in JSON response body
+- Protected routes require `Authorization: Bearer <access_token>`
+- Refresh endpoint accepts JSON body: `{ "refresh_token": "..." }`
+- No auth cookies are set by the backend
 
 ### Token Expiration
 - **Access Token**: Short-lived (default: 15 minutes)
 - **Refresh Token**: Long-lived (default: 7 days)
 
-### CSRF Protection
-- Protected routes require an `X-XSRF-TOKEN` header
-- CSRF token is automatically set in cookies upon login
+### CSRF Status
+- CSRF middleware is removed from active routes
+- `X-XSRF-TOKEN` is not required
 
 ---
 
@@ -57,14 +60,13 @@ docker compose up -d
 ### Required Headers for Protected Routes
 ```
 Content-Type: application/json
-X-XSRF-TOKEN: <csrf-token-from-cookie>
-Authorization: Bearer <access-token> (optional, cookie takes precedence)
+Authorization: Bearer <access-token>
 ```
 
 ### CORS Configuration
 - Allowed Origins: Configurable via `ALLOWED_ORIGINS` env variable
 - Allowed Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH
-- Credentials: Allowed
+- Credentials: Disabled (`AllowCredentials: false`)
 - Max Age: 12 hours
 
 ---
