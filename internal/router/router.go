@@ -64,6 +64,9 @@ func SetupRouter(
 	admin := r.Group("/api/admin")
 	admin.Use(middleware.AuthMiddleware(jwtSvc))
 	{
+		// Dashboard
+		admin.GET("/dashboard/stats", h.GetDashboardStats)
+
 		// User management
 		admin.POST("/create-user", h.CreateUser)
 		admin.POST("/reset-admin", h.ResetAdminPassword)
